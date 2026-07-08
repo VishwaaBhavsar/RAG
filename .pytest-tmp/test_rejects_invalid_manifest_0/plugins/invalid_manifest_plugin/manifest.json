@@ -1,0 +1,9 @@
+{
+  "name": "broken-plugin",
+  "version": 1,
+  "type": "loader",
+  "entry_point": "plugin.py:load",
+  "required_config_keys": [],
+  "unexpected": true
+}
+

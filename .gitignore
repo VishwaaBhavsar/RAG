@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+dist/
+build/
+*.pyc
+
+# Node
+node_modules/
+coverage/
+vite.svg
+
+# OS
+.DS_Store
+Thumbs.db
+
+.chroma_data/

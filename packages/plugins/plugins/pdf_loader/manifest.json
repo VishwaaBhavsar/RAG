@@ -1,0 +1,7 @@
+{
+  "name": "pdf-loader",
+  "version": "1.0.0",
+  "type": "loader",
+  "entry_point": "plugin.py:load",
+  "required_config_keys": ["pdf_chunk_size"]
+}
