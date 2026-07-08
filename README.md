@@ -31,6 +31,10 @@ ChromaDB vector store
 persistent local vectors + cosine similarity
         |
         v
+Reranker
+optional cross-encoder reranking
+        |
+        v
 LLM provider
 Ollama llama3.2 or fake provider
         |
@@ -119,7 +123,9 @@ Question-answering flow:
   -> if PDF, call PDF loader plugin
   -> if text, decode text directly
   -> embed documents and upsert vectors into ChromaDB
-  -> embed the question and search ChromaDB by cosine similarity
+  -> embed the question and retrieve a wider candidate set from ChromaDB
+  -> optionally re-rank candidates with a reranker
+  -> return the final top-k documents
   -> build prompt with question + context
   -> call selected LLM provider
   -> return answer, context, and matched documents
@@ -373,6 +379,33 @@ $env:RAG_FRAMEWORK_VECTORSTORE__PROVIDER = "in-memory"
 python .\apps\api\src\server.py
 ```
 
+The active reranker provider is selected with:
+
+```text
+RAG_FRAMEWORK_RERANKER__PROVIDER
+```
+
+Default:
+
+```text
+cross-encoder
+```
+
+Use `none` for fast or no-download testing:
+
+```powershell
+$env:RAG_FRAMEWORK_RERANKER__PROVIDER = "none"
+python .\apps\api\src\server.py
+```
+
+Use the cross-encoder reranker after you have installed the sentence-transformers dependency:
+
+```powershell
+python -m pip install -e ".[embeddings]"
+$env:RAG_FRAMEWORK_RERANKER__PROVIDER = "cross-encoder"
+python .\apps\api\src\server.py
+```
+
 Use the fake embeddings provider only when you want fast local smoke tests without loading the real model:
 
 ```powershell
@@ -452,9 +485,34 @@ Use this table when adding features.
 | Change RAG retrieval behavior in current API | `apps/api/src/server.py`, especially `InMemoryKnowledgeBase.add_documents()` and `InMemoryKnowledgeBase.search()` |
 | Add or change vector database support | add a `BaseVectorStore` implementation, register it, and select it with `RAG_FRAMEWORK_VECTORSTORE__PROVIDER` |
 | Add or change embedding support | add a `BaseEmbeddingProvider` implementation, register it, and select it with `RAG_FRAMEWORK_EMBEDDINGS__PROVIDER` |
+| Add or change reranking support | add a `BaseReranker` implementation, register it, and select it with `RAG_FRAMEWORK_RERANKER__PROVIDER` |
 | Add tests for API behavior | `tests/unit/api/` |
 | Add tests for providers | `tests/unit/providers/` |
 | Add tests for plugins | `tests/unit/plugins/` |
+
+## Retrieval Eval
+
+Run the standalone retrieval evaluation harness with:
+
+```powershell
+python scripts/eval_retrieval.py
+```
+
+By default it uses the in-memory vector store for a clean, isolated run. To try the
+Chroma-backed store instead, pass:
+
+```powershell
+python scripts/eval_retrieval.py --vector-store chroma
+```
+
+The script prints the fixed corpus and eval cases first, then runs the same cases twice:
+
+- `reranker=none`
+- `reranker=cross-encoder`
+
+The summary shows how many cases passed, the pass rate as a percentage, and a failure
+breakdown with the retrieved source and top document content. The side-by-side line at
+the end makes it easy to compare whether reranking improved retrieval quality.
 
 ## Adding A New LLM Provider
 

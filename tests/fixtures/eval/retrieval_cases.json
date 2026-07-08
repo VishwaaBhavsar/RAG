@@ -1,0 +1,82 @@
+[
+  {
+    "question": "What forms of payment can I use?",
+    "expected_source": "payment-methods-specific",
+    "expected_content_contains": "UPI"
+  },
+  {
+    "question": "How do I get my money back after a return?",
+    "expected_source": "refund-policy",
+    "expected_content_contains": "original payment method"
+  },
+  {
+    "question": "Can I exchange an unused item in original packaging?",
+    "expected_source": "exchange-policy",
+    "expected_content_contains": "unused"
+  },
+  {
+    "question": "How fast is standard shipping?",
+    "expected_source": "shipping-times",
+    "expected_content_contains": "3 to 5 business days"
+  },
+  {
+    "question": "My parcel is delayed and I need help.",
+    "expected_source": "delivery-delay",
+    "expected_content_contains": "tracking page"
+  },
+  {
+    "question": "I forgot my password and need to log in again.",
+    "expected_source": "password-reset",
+    "expected_content_contains": "Forgot Password"
+  },
+  {
+    "question": "How do I change my username from the profile page?",
+    "expected_source": "username-change",
+    "expected_content_contains": "profile settings"
+  },
+  {
+    "question": "Tell me about dogs as pets.",
+    "expected_source": "dog-care",
+    "expected_content_contains": "walks"
+  },
+  {
+    "question": "Can I make a sugar-free chocolate dessert?",
+    "expected_source": "sugar-free-chocolate",
+    "expected_content_contains": "sugar-free chocolate"
+  },
+  {
+    "question": "Where do residents apply for parking permits?",
+    "expected_source": "parking-permit",
+    "expected_content_contains": "city portal"
+  },
+  {
+    "question": "Where can visitors park for a day?",
+    "expected_source": "visitor-parking",
+    "expected_content_contains": "guest lot"
+  },
+  {
+    "question": "My laptop battery is swollen.",
+    "expected_source": "battery-safety",
+    "expected_content_contains": "power it off"
+  },
+  {
+    "question": "The charger is loose in the port.",
+    "expected_source": "charger-troubleshooting",
+    "expected_content_contains": "USB-C cable"
+  },
+  {
+    "question": "How do I cancel my subscription?",
+    "expected_source": "cancel-subscription",
+    "expected_content_contains": "cancel at the end of the cycle"
+  },
+  {
+    "question": "Can I pause my membership for one billing cycle?",
+    "expected_source": "pause-subscription",
+    "expected_content_contains": "pause your membership"
+  },
+  {
+    "question": "What details are included on an invoice?",
+    "expected_source": "invoice-tax",
+    "expected_content_contains": "GST number"
+  }
+]

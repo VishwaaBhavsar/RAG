@@ -12,7 +12,14 @@ Usage example:
 """
 
 from .chroma_vector_store import ChromaVectorStore, ChromaVectorStoreConfig, ChromaVectorStoreError
+from .cross_encoder_reranker import CrossEncoderReranker, CrossEncoderRerankerConfig, CrossEncoderRerankerError
 from .in_memory_vector_store import InMemoryVectorStore
+from .multilingual_embeddings import (
+    MultilingualSentenceTransformersEmbeddingConfig,
+    MultilingualSentenceTransformersEmbeddingError,
+    MultilingualSentenceTransformersEmbeddingProvider,
+)
+from .noop_reranker import NoOpReranker
 from .ollama_llm import OllamaLLMConfig, OllamaLLMError, OllamaLLMProvider
 from .sentence_transformers_embeddings import (
     SentenceTransformersEmbeddingConfig,
@@ -24,7 +31,14 @@ __all__ = [
     "ChromaVectorStore",
     "ChromaVectorStoreConfig",
     "ChromaVectorStoreError",
+    "CrossEncoderReranker",
+    "CrossEncoderRerankerConfig",
+    "CrossEncoderRerankerError",
     "InMemoryVectorStore",
+    "MultilingualSentenceTransformersEmbeddingConfig",
+    "MultilingualSentenceTransformersEmbeddingError",
+    "MultilingualSentenceTransformersEmbeddingProvider",
+    "NoOpReranker",
     "OllamaLLMConfig",
     "OllamaLLMError",
     "OllamaLLMProvider",

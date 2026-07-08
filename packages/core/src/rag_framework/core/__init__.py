@@ -54,6 +54,7 @@ from .registry import (
     RegistryNotFoundError,
     register_default_embedding_providers,
     register_default_llm_providers,
+    register_default_reranker_providers,
     register_default_vector_store_providers,
 )
 
@@ -95,5 +96,6 @@ __all__ = [
     "merge_tenant_config",
     "register_default_embedding_providers",
     "register_default_llm_providers",
+    "register_default_reranker_providers",
     "register_default_vector_store_providers",
 ]

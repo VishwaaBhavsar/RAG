@@ -1,0 +1,102 @@
+[
+  {
+    "source": "payment-methods-specific",
+    "topic": "payments",
+    "content": "You can pay with UPI, debit cards, credit cards, or cash on delivery."
+  },
+  {
+    "source": "payment-methods-general",
+    "topic": "payments",
+    "content": "Payment methods, checkout, cards, cash, UPI, payment options, and order billing are described generally."
+  },
+  {
+    "source": "refund-policy",
+    "topic": "returns",
+    "content": "Refunds are issued to the original payment method within 7 business days after inspection."
+  },
+  {
+    "source": "exchange-policy",
+    "topic": "returns",
+    "content": "Exchanges are available within 14 days if the item is unused and in original packaging."
+  },
+  {
+    "source": "shipping-times",
+    "topic": "shipping",
+    "content": "Standard shipping takes 3 to 5 business days; express shipping arrives in 1 to 2 business days."
+  },
+  {
+    "source": "delivery-delay",
+    "topic": "shipping",
+    "content": "If a parcel is delayed, check the courier tracking page and contact support after 48 hours."
+  },
+  {
+    "source": "password-reset",
+    "topic": "account",
+    "content": "To reset your password, click Forgot Password and follow the email link."
+  },
+  {
+    "source": "username-change",
+    "topic": "account",
+    "content": "You can update your username from the profile settings page."
+  },
+  {
+    "source": "dog-care",
+    "topic": "pets",
+    "content": "Dogs are loyal animals that enjoy walks, play, and training."
+  },
+  {
+    "source": "cat-care",
+    "topic": "pets",
+    "content": "Cats are independent pets that like boxes, naps, and gentle routines."
+  },
+  {
+    "source": "cake-recipe",
+    "topic": "food",
+    "content": "Chocolate cake recipes use sugar, flour, butter, and frosting."
+  },
+  {
+    "source": "sugar-free-chocolate",
+    "topic": "food",
+    "content": "A sugar-free chocolate dessert uses cocoa, almond flour, and sweetener."
+  },
+  {
+    "source": "parking-permit",
+    "topic": "parking",
+    "content": "Residents can apply for a parking permit through the city portal."
+  },
+  {
+    "source": "visitor-parking",
+    "topic": "parking",
+    "content": "Visitors may park in the guest lot for up to 24 hours with a temporary pass."
+  },
+  {
+    "source": "battery-safety",
+    "topic": "hardware",
+    "content": "If a laptop battery swells, power it off and contact the manufacturer for replacement."
+  },
+  {
+    "source": "charger-troubleshooting",
+    "topic": "hardware",
+    "content": "If the charger is loose, clean the port and test another USB-C cable."
+  },
+  {
+    "source": "cancel-subscription",
+    "topic": "subscriptions",
+    "content": "To cancel a subscription, go to billing and choose cancel at the end of the cycle."
+  },
+  {
+    "source": "pause-subscription",
+    "topic": "subscriptions",
+    "content": "You can pause your membership for one billing cycle without losing your account."
+  },
+  {
+    "source": "invoice-tax",
+    "topic": "billing",
+    "content": "Invoices include the GST number, line items, and total tax."
+  },
+  {
+    "source": "receipt-store-credit",
+    "topic": "billing",
+    "content": "Receipts show purchase date, product name, and the final amount paid."
+  }
+]

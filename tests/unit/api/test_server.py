@@ -20,6 +20,7 @@ PDF_FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "documents" / "
 def default_fast_rag_providers(monkeypatch) -> None:
     monkeypatch.setenv("RAG_FRAMEWORK_EMBEDDINGS__PROVIDER", "fake")
     monkeypatch.setenv("RAG_FRAMEWORK_VECTORSTORE__PROVIDER", "in-memory")
+    monkeypatch.setenv("RAG_FRAMEWORK_RERANKER__PROVIDER", "none")
 
 
 def test_upload_a_pdf_and_ask_a_question(monkeypatch) -> None:
@@ -152,6 +153,7 @@ def test_chat_retrieves_semantically_similar_document_with_embeddings(monkeypatc
     from rag_framework.core.contracts import BaseEmbeddingProvider, BaseLLMProvider
     from rag_framework.core.registry import Registry
     from rag_framework.providers.in_memory_vector_store import InMemoryVectorStore
+    from rag_framework.providers.noop_reranker import NoOpReranker
 
     class SemanticTestEmbeddingProvider(BaseEmbeddingProvider):
         def embed(self, texts: Sequence[str]) -> list[list[float]]:
@@ -175,6 +177,7 @@ def test_chat_retrieves_semantically_similar_document_with_embeddings(monkeypatc
         registry.register("llm", "test", lambda: TestLLMProvider())
         registry.register("embeddings", "semantic-test", lambda: SemanticTestEmbeddingProvider())
         registry.register("vectorstore", "in-memory", lambda: InMemoryVectorStore())
+        registry.register("reranker", "none", lambda: NoOpReranker())
         return registry
 
     monkeypatch.setattr(server_module, "_build_registry", build_registry)
@@ -222,3 +225,64 @@ def test_chroma_vector_store_persists_documents_across_app_instances(monkeypatch
 
     assert chat_response.status_code == 200
     assert chat_response.json()["documents"][0]["content"] == "Dogs remain loyal household companions."
+
+
+def test_chat_reranks_wide_vector_results_before_returning_top_k(monkeypatch) -> None:
+    from collections.abc import Sequence
+
+    from rag_framework.core.contracts import BaseEmbeddingProvider, BaseLLMProvider, BaseReranker
+    from rag_framework.core.registry import Registry
+    from rag_framework.providers.in_memory_vector_store import InMemoryVectorStore
+
+    class RankingTestEmbeddingProvider(BaseEmbeddingProvider):
+        def embed(self, texts: Sequence[str]) -> list[list[float]]:
+            vectors: list[list[float]] = []
+            for text in texts:
+                lowered = text.lower()
+                if "lexical decoy" in lowered or "policy" in lowered:
+                    vectors.append([1.0, 0.0])
+                elif "refund" in lowered:
+                    vectors.append([0.8, 0.2])
+                else:
+                    vectors.append([0.0, 1.0])
+            return vectors
+
+    class PreferRefundReranker(BaseReranker):
+        def rerank(self, query: str, documents: Sequence[Document]) -> list[Document]:
+            return sorted(documents, key=lambda document: "refund" not in document.content.lower())
+
+    class TestLLMProvider(BaseLLMProvider):
+        def generate(self, prompt: str, *, system_prompt: str | None = None) -> str:
+            return "mocked reranked answer"
+
+    def build_registry() -> Registry:
+        registry = Registry()
+        registry.register("llm", "test", lambda: TestLLMProvider())
+        registry.register("embeddings", "ranking-test", lambda: RankingTestEmbeddingProvider())
+        registry.register("vectorstore", "in-memory", lambda: InMemoryVectorStore())
+        registry.register("reranker", "prefer-refund", lambda: PreferRefundReranker())
+        return registry
+
+    monkeypatch.setattr(server_module, "_build_registry", build_registry)
+    monkeypatch.setenv("RAG_FRAMEWORK_LLM__PROVIDER", "test")
+    monkeypatch.setenv("RAG_FRAMEWORK_EMBEDDINGS__PROVIDER", "ranking-test")
+    monkeypatch.setenv("RAG_FRAMEWORK_VECTORSTORE__PROVIDER", "in-memory")
+    monkeypatch.setenv("RAG_FRAMEWORK_RERANKER__PROVIDER", "prefer-refund")
+
+    client = TestClient(create_app())
+    decoy_response = client.post(
+        "/ingest",
+        json={"text": "Lexical decoy policy text with no answer.", "source": "decoy"},
+    )
+    answer_response = client.post(
+        "/ingest",
+        json={"text": "Refunds are available within thirty days.", "source": "refunds"},
+    )
+
+    assert decoy_response.status_code == 200
+    assert answer_response.status_code == 200
+
+    chat_response = client.post("/chat", json={"question": "policy", "top_k": 1})
+
+    assert chat_response.status_code == 200
+    assert chat_response.json()["documents"][0]["content"] == "Refunds are available within thirty days."

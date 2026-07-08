@@ -105,10 +105,12 @@ def register_default_embedding_providers(registry: Registry) -> None:
     """Register the built-in embedding providers."""
 
     from .fakes import FakeEmbeddingProvider
+    from rag_framework.providers.multilingual_embeddings import MultilingualSentenceTransformersEmbeddingProvider
     from rag_framework.providers.sentence_transformers_embeddings import SentenceTransformersEmbeddingProvider
 
     registry.register("embeddings", "fake", lambda: FakeEmbeddingProvider())
     registry.register("embeddings", "sentence-transformers", lambda: SentenceTransformersEmbeddingProvider())
+    registry.register("embeddings", "multilingual", lambda: MultilingualSentenceTransformersEmbeddingProvider())
 
 
 
@@ -120,3 +122,14 @@ def register_default_vector_store_providers(registry: Registry) -> None:
 
     registry.register("vectorstore", "chroma", lambda: ChromaVectorStore())
     registry.register("vectorstore", "in-memory", lambda: InMemoryVectorStore())
+
+
+
+def register_default_reranker_providers(registry: Registry) -> None:
+    """Register the built-in reranker providers."""
+
+    from rag_framework.providers.cross_encoder_reranker import CrossEncoderReranker
+    from rag_framework.providers.noop_reranker import NoOpReranker
+
+    registry.register("reranker", "cross-encoder", lambda: CrossEncoderReranker())
+    registry.register("reranker", "none", lambda: NoOpReranker())

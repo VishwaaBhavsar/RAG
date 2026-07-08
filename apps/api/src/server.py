@@ -31,9 +31,10 @@ from rag_framework.core import (
     VectorRecord,
     register_default_embedding_providers,
     register_default_llm_providers,
+    register_default_reranker_providers,
     register_default_vector_store_providers,
 )
-from rag_framework.core.contracts import BaseEmbeddingProvider, BaseLLMProvider, BaseLoader, BaseVectorStore
+from rag_framework.core.contracts import BaseEmbeddingProvider, BaseLLMProvider, BaseLoader, BaseReranker, BaseVectorStore
 from rag_framework.plugins import PluginManager
 
 
@@ -41,6 +42,7 @@ from rag_framework.plugins import PluginManager
 class InMemoryKnowledgeBase:
     embedding_provider: BaseEmbeddingProvider
     vector_store: BaseVectorStore
+    reranker: BaseReranker
 
     @property
     def documents(self) -> list[Document]:
@@ -81,7 +83,13 @@ class InMemoryKnowledgeBase:
             raise ValueError("embedding provider must return exactly one query vector")
 
         query_embedding = tuple(float(value) for value in query_embeddings[0])
-        return [result.record.document for result in self.vector_store.query(query_embedding, top_k=top_k)]
+        retrieval_top_k = max(top_k, 10)
+        candidate_documents = [
+            result.record.document
+            for result in self.vector_store.query(query_embedding, top_k=retrieval_top_k)
+        ]
+        reranked_documents = self.reranker.rerank(question, candidate_documents)
+        return reranked_documents[:top_k]
 
 
 @dataclass(slots=True)
@@ -91,6 +99,7 @@ class BackendState:
     llm_provider_name: str
     embeddings_provider_name: str
     vector_store_provider_name: str
+    reranker_provider_name: str
     pdf_loader_name: str = "pdf"
 
 
@@ -133,6 +142,7 @@ def _build_registry() -> Registry:
     register_default_llm_providers(registry)
     register_default_embedding_providers(registry)
     register_default_vector_store_providers(registry)
+    register_default_reranker_providers(registry)
 
     plugin_root = _repo_root() / "packages" / "plugins" / "plugins"
     result = PluginManager(plugin_root).load_plugins()
@@ -256,12 +266,19 @@ def create_app() -> FastAPI:
     embedding_provider = cast(BaseEmbeddingProvider, registry.create("embeddings", embeddings_provider_name))
     vector_store_provider_name = os.getenv("RAG_FRAMEWORK_VECTORSTORE__PROVIDER", "chroma").strip().lower() or "chroma"
     vector_store = cast(BaseVectorStore, registry.create("vectorstore", vector_store_provider_name))
+    reranker_provider_name = os.getenv("RAG_FRAMEWORK_RERANKER__PROVIDER", "cross-encoder").strip().lower() or "cross-encoder"
+    reranker = cast(BaseReranker, registry.create("reranker", reranker_provider_name))
     state = BackendState(
         registry=registry,
-        knowledge_base=InMemoryKnowledgeBase(embedding_provider=embedding_provider, vector_store=vector_store),
+        knowledge_base=InMemoryKnowledgeBase(
+            embedding_provider=embedding_provider,
+            vector_store=vector_store,
+            reranker=reranker,
+        ),
         llm_provider_name=llm_provider_name,
         embeddings_provider_name=embeddings_provider_name,
         vector_store_provider_name=vector_store_provider_name,
+        reranker_provider_name=reranker_provider_name,
     )
 
     app = FastAPI(title="RAG Framework API", version="0.1.0")
@@ -274,6 +291,7 @@ def create_app() -> FastAPI:
             "llm_provider": state.llm_provider_name,
             "embeddings_provider": state.embeddings_provider_name,
             "vector_store_provider": state.vector_store_provider_name,
+            "reranker_provider": state.reranker_provider_name,
             "documents": state.knowledge_base.count(),
         }
 
