@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #eef6fb;
+    --foreground: #0c1e2d;
+    --muted: #dceaf3;
+    --muted-foreground: #557188;
+    --panel: rgba(255, 255, 255, 0.82);
+    --panel-foreground: #0c1e2d;
+    --border: rgba(71, 103, 128, 0.18);
+    --accent: #1b7ea6;
+    --accent-foreground: #f5fbff;
+    --bubble-user: linear-gradient(135deg, #1b7ea6, #175f92);
+    --bubble-assistant: rgba(255, 255, 255, 0.86);
+    --shadow: rgba(8, 35, 55, 0.18);
+    --success: #1f8a70;
+    --warning: #af7a12;
+    --danger: #b43c4a;
+    --font-display: "Segoe UI Semibold", "Trebuchet MS", "Avenir Next", "Helvetica Neue", sans-serif;
+    --font-body: "Aptos", "Gill Sans", "Trebuchet MS", sans-serif;
+    --signature-opacity: 0.42;
+    --backdrop: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(238, 246, 251, 0.92));
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    font-family: var(--font-body);
+    background: var(--background);
+    color: var(--foreground);
+    text-rendering: optimizeLegibility;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 32%, white);
+    color: var(--foreground);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 36%, transparent);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+}
+
+@layer utilities {
+  .typing-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--accent);
+    animation: typing 1s infinite ease-in-out;
+  }
+
+  .health-grid {
+    background-image:
+      linear-gradient(to right, rgba(27, 126, 166, 0.13) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(27, 126, 166, 0.13) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: radial-gradient(circle at center, black, transparent 92%);
+  }
+
+  .food-rings {
+    background:
+      radial-gradient(circle, transparent 0 24%, rgba(184, 91, 34, 0.08) 24% 26%, transparent 26% 43%, rgba(184, 91, 34, 0.07) 43% 45%, transparent 45%);
+    filter: blur(1px);
+    animation: spin-slow 28s linear infinite;
+  }
+
+  .food-grain {
+    background-image:
+      radial-gradient(rgba(120, 80, 40, 0.08) 0.8px, transparent 0.8px),
+      radial-gradient(rgba(255, 255, 255, 0.65) 0.8px, transparent 0.8px);
+    background-size: 18px 18px, 26px 26px;
+    background-position: 0 0, 9px 11px;
+    mix-blend-mode: multiply;
+  }
+
+  .fallback-orbits {
+    background:
+      radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 30%),
+      radial-gradient(circle at 68% 22%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 24%),
+      radial-gradient(circle at 50% 70%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 32%);
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(0);
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(32rem);
+    opacity: 0.1;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, 1%, 0) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
