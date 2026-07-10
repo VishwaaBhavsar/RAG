@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import httpx
 
@@ -12,13 +12,21 @@ class AnthropicProvider(LLMProvider):
         self.settings = get_settings()
 
     @retry(retries=get_settings().MAX_RETRIES)
-    def generate(self, system_prompt: str, user_message: str, max_tokens: int) -> str:
+    def generate(
+        self,
+        system_prompt: str,
+        user_message: str,
+        max_tokens: int,
+        temperature: float | None = None,
+    ) -> str:
         payload = {
             "model": self.settings.ANTHROPIC_MODEL,
             "max_tokens": max_tokens,
             "system": system_prompt,
             "messages": [{"role": "user", "content": user_message}],
         }
+        if temperature is not None:
+            payload["temperature"] = temperature
         headers = {
             "x-api-key": self.settings.ANTHROPIC_API_KEY or "",
             "anthropic-version": "2023-06-01",
@@ -30,6 +38,5 @@ class AnthropicProvider(LLMProvider):
         return "".join(block.get("text", "") for block in data.get("content", [])).strip()
 
     @retry(retries=get_settings().MAX_RETRIES)
-    def classify(self, prompt: str) -> str:
-        return self.generate("Answer with only YES or NO.", prompt, max_tokens=1)
-
+    def classify(self, prompt: str, max_tokens: int = 5, temperature: float = 0.0) -> str:
+        return self.generate("Answer with only YES or NO.", prompt, max_tokens=max_tokens, temperature=temperature)

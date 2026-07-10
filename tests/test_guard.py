@@ -1,14 +1,58 @@
-from __future__ import annotations
+﻿from __future__ import annotations
+
+from dataclasses import dataclass
 
 import pytest
 
 from chatbot.config.domain_config import TOPIC_EXAMPLES, SYSTEM_PROMPT, build_classifier_prompt
+from chatbot.core.chatbot import Chatbot
 from chatbot.core.guard.embedding_guard import EmbeddingGuard
+from chatbot.core.guard.llm_guard import classify_with_llm
 
 
 @pytest.fixture(scope="module")
 def guard() -> EmbeddingGuard:
     return EmbeddingGuard()
+
+
+@dataclass(frozen=True)
+class _GuardDecision:
+    on_topic: bool
+    ambiguous: bool
+    score: float = 0.0
+    matched_example: str | None = None
+
+
+class _FakeGuard:
+    def __init__(self, decision: _GuardDecision) -> None:
+        self.decision = decision
+
+    def classify(self, message: str) -> _GuardDecision:  # noqa: ARG002
+        return self.decision
+
+
+class _FakeProvider:
+    def __init__(self, classify_output: str | Exception, generate_output: str = "final answer") -> None:
+        self.classify_output = classify_output
+        self.generate_output = generate_output
+        self.classify_calls: list[tuple[str, int, float]] = []
+        self.generate_calls: list[tuple[str, str, int, float | None]] = []
+
+    def classify(self, prompt: str, max_tokens: int = 5, temperature: float = 0.0) -> str:
+        self.classify_calls.append((prompt, max_tokens, temperature))
+        if isinstance(self.classify_output, Exception):
+            raise self.classify_output
+        return self.classify_output
+
+    def generate(
+        self,
+        system_prompt: str,
+        user_message: str,
+        max_tokens: int,
+        temperature: float | None = None,
+    ) -> str:
+        self.generate_calls.append((system_prompt, user_message, max_tokens, temperature))
+        return self.generate_output
 
 
 def test_healthcare_prompt_includes_safety_boundaries() -> None:
@@ -56,3 +100,80 @@ def test_abstract_healthcare_phrasing_is_not_confidently_off_topic(guard: Embedd
         f"on_topic={result.on_topic}, ambiguous={result.ambiguous}, score={result.score}, "
         f"matched_example={result.matched_example!r}"
     )
+
+
+def test_embedding_guard_accepts_clear_on_topic_input(guard: EmbeddingGuard) -> None:
+    result = guard.classify("What are common side effects of ibuprofen?")
+
+    assert result.on_topic is True
+    assert result.ambiguous is False
+
+
+def test_embedding_guard_rejects_clear_off_topic_input(guard: EmbeddingGuard) -> None:
+    result = guard.classify("How do I fix my car engine?")
+
+    assert result.on_topic is False
+    assert result.ambiguous is False
+
+
+def test_llm_classifier_accepts_exact_yes_only() -> None:
+    provider = _FakeProvider("YES")
+
+    assert classify_with_llm(provider, "I have stomachache.") is True
+    assert provider.classify_calls[0][1:] == (5, 0.0)
+
+
+def test_llm_classifier_rejects_invalid_output() -> None:
+    provider = _FakeProvider("YES, maybe")
+
+    assert classify_with_llm(provider, "I have stomachache.") is False
+
+
+def test_llm_classifier_rejects_provider_failure() -> None:
+    provider = _FakeProvider(RuntimeError("boom"))
+
+    assert classify_with_llm(provider, "I have stomachache.") is False
+
+
+def test_chatbot_accepts_ambiguous_message_through_llm_fallback() -> None:
+    provider = _FakeProvider("YES", generate_output="health answer")
+    chatbot = Chatbot(provider=provider, guard=_FakeGuard(_GuardDecision(on_topic=False, ambiguous=True)))
+
+    result = chatbot.chat("I have stomachache.")
+
+    assert result.on_topic is True
+    assert result.response == "health answer"
+    assert provider.generate_calls
+
+
+def test_chatbot_rejects_ambiguous_message_through_llm_fallback() -> None:
+    provider = _FakeProvider("NO")
+    chatbot = Chatbot(provider=provider, guard=_FakeGuard(_GuardDecision(on_topic=False, ambiguous=True)))
+
+    result = chatbot.chat("I have stomachache.")
+
+    assert result.on_topic is False
+    assert result.response == chatbot.off_topic_reply
+    assert provider.generate_calls == []
+
+
+def test_chatbot_rejects_invalid_classifier_response() -> None:
+    provider = _FakeProvider("maybe")
+    chatbot = Chatbot(provider=provider, guard=_FakeGuard(_GuardDecision(on_topic=False, ambiguous=True)))
+
+    result = chatbot.chat("I have stomachache.")
+
+    assert result.on_topic is False
+    assert result.response == chatbot.off_topic_reply
+    assert provider.generate_calls == []
+
+
+def test_chatbot_rejects_provider_failure_during_llm_classification() -> None:
+    provider = _FakeProvider(RuntimeError("boom"))
+    chatbot = Chatbot(provider=provider, guard=_FakeGuard(_GuardDecision(on_topic=False, ambiguous=True)))
+
+    result = chatbot.chat("I have stomachache.")
+
+    assert result.on_topic is False
+    assert result.response == chatbot.off_topic_reply
+    assert provider.generate_calls == []
